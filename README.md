@@ -115,3 +115,7 @@ KV_STORE_TOKEN=
 ## License
 
 MIT
+
+## Demo
+
+📺 [Watch the demo](demos/$(basename "$video")) — slide-style walkthrough of key features and usage.
