@@ -15,6 +15,7 @@ Outputs:
   - token_expiry (int)  — unix epoch when this token expires
 """
 
+import os
 import requests
 import json
 import time
@@ -48,8 +49,29 @@ def main(
     new_refresh_token = payload.get("refresh_token", refresh_token)
     token_expiry = int(time.time()) + expires_in - 60  # 60s buffer
 
-    # NOTE: persist new_refresh_token back to your KV store here.
-    # e.g. requests.put("https://your-kv-store/xero/refresh_token", json={"value": new_refresh_token})
+    # Persist the rotated refresh token back to the KV store IMMEDIATELY.
+    # Xero rotates the refresh token on every exchange; the previous token is
+    # now invalid. If we fail to persist the new one, the next workflow run
+    # will lose Xero access permanently. Persist only when the token actually
+    # changed, and abort loudly on failure rather than silently dropping it.
+    if new_refresh_token != refresh_token:
+        kv_url = os.environ.get("KV_STORE_URL")
+        kv_token = os.environ.get("KV_STORE_TOKEN")
+        if not kv_url or not kv_token:
+            raise RuntimeError(
+                "Xero rotated the refresh token but KV_STORE_URL / KV_STORE_TOKEN "
+                "are not configured; cannot persist the new token. Aborting to "
+                "avoid silently losing Xero access."
+            )
+        kv_resp = requests.put(
+            f"{kv_url.rstrip('/')}/xero/refresh_token",
+            json={"value": new_refresh_token},
+            headers={"Authorization": f"Bearer {kv_token}"},
+            timeout=10,
+        )
+        # Raise on failure so the workflow aborts visibly instead of
+        # discarding the only valid refresh token.
+        kv_resp.raise_for_status()
 
     return {
         "access_token": access_token,

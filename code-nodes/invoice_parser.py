@@ -121,7 +121,13 @@ def build_xero_payload(llm_extracted: dict, po_match: Any = None) -> dict:
         "DueDate": due_date,
         "InvoiceNumber": invoice_number,
         "Reference": po_match.get("poNumber") if po_match else "",
-        "Status": "DRAFT" if needs_manual_review else "AUTHORISED",
+        # SAFETY: Always create as DRAFT. These fields come from an LLM
+        # extraction of an invoice PDF and must never be auto-authorised into
+        # an AP invoice. An explicit human-approval step in the Vellum workflow
+        # is responsible for promoting DRAFT -> AUTHORISED. Auto-authorising
+        # here would let an LLM hallucination create an authorised payable
+        # without any human in the loop.
+        "Status": "DRAFT",
         "LineAmountTypes": "Exclusive",
         "LineItems": [
             {
