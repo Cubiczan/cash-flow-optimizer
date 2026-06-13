@@ -1,0 +1,8 @@
+# External API client used by the Vellum Code Execution Nodes.
+requests>=2.28
+
+# Resilience helpers (retry/backoff/jitter/circuit-breaker, idempotency, atomic
+# writes, FastAPI auth/CORS). Provides @resilient used by the Xero token refresh
+# node so transient Xero / KV-store failures retry instead of crashing the
+# Vellum workflow.
+cubiczan-resilience @ git+https://github.com/icohangar-ops/cubiczan-resilience.git#subdirectory=python
