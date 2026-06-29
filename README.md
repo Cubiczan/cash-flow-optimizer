@@ -1,5 +1,7 @@
 # Cash Flow Optimizer — Cubiczan
 
+> **Cubiczan stack** — [Profile](https://github.com/Cubiczan) · [WCO](https://github.com/Cubiczan/working-capital-optimizer) · **You are here:** `cash-flow-optimizer`
+
 A Vellum-powered cash flow intelligence system with real-time Xero, Precoro, and Outlook integration.
 
 ## Screenshots
@@ -111,6 +113,15 @@ VELLUM_API_KEY=
 KV_STORE_URL=
 KV_STORE_TOKEN=
 ```
+
+---
+
+## Cubiczan stack
+
+| Finance | [Strata](https://github.com/Cubiczan/Strata) · [Metabocommand](https://github.com/Cubiczan/Metabocommand) · [meshcfo](https://github.com/Cubiczan/meshcfo) · [working-capital-optimizer](https://github.com/Cubiczan/working-capital-optimizer) · [cash-flow-optimizer](https://github.com/Cubiczan/cash-flow-optimizer) · [finance-cockpit](https://github.com/Cubiczan/finance-cockpit) |
+| Governance | [consensus-hardening-protocol](https://github.com/Cubiczan/consensus-hardening-protocol) · [agent-conductor](https://github.com/Cubiczan/agent-conductor) · [compliance-as-code-agent](https://github.com/Cubiczan/compliance-as-code-agent) · [cleanmandate](https://github.com/Cubiczan/cleanmandate) |
+
+Daily cash position + 13-week forecast — complements [working-capital-optimizer](https://github.com/Cubiczan/working-capital-optimizer) agent recommendations.
 
 ## License
 
