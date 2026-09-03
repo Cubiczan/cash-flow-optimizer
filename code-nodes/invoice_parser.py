@@ -159,10 +159,55 @@ def build_xero_payload(llm_extracted: dict, po_match: Any = None) -> dict:
     }
 
 
+def dispatch_uipath_invoice_job(
+    llm_extracted: dict,
+    po_match: Any = None,
+    *,
+    attachment_filename: str = "",
+) -> dict:
+    """Send invoice data to UiPath for Outlook/OneDrive handoff automation."""
+
+    try:
+        from uipath_orchestrator import UiPathError, config_from_env, start_job
+    except Exception as exc:  # pragma: no cover - import path depends on host
+        return {"error": f"UiPath helper import failed: {exc}"}
+
+    config = config_from_env()
+    if not config:
+        return {
+            "error": (
+                "UiPath is not configured. Set UIPATH_CLIENT_ID, UIPATH_CLIENT_SECRET, "
+                "UIPATH_ORGANIZATION_NAME, and UIPATH_TENANT_NAME."
+            )
+        }
+
+    payload = build_xero_payload(llm_extracted, po_match)
+    xero_payload = payload["xero_invoice_payload"]
+    job_input = {
+        "attachment_filename": attachment_filename,
+        "vendor_name": payload["vendor_name"],
+        "invoice_number": xero_payload.get("InvoiceNumber", ""),
+        "invoice_amount": payload["invoice_amount"],
+        "due_date": payload["due_date"],
+        "po_number": po_match.get("poNumber") if po_match else "",
+        "needs_manual_review": payload["needs_manual_review"],
+        "three_way_match_passed": payload["three_way_match_passed"],
+        "match_variance": payload["match_variance"],
+        "xero_invoice_payload": xero_payload,
+    }
+
+    try:
+        job = start_job(config, input_arguments=job_input)
+    except UiPathError as exc:
+        return {**payload, "error": str(exc)}
+
+    return {**payload, "uipath_job": job}
+
+
 def main(mode: str, **kwargs) -> dict:
     """
     Dispatch to pre-LLM or post-LLM function based on mode.
-    mode = 'extract' | 'build_payload'
+    mode = 'extract' | 'build_payload' | 'dispatch_uipath'
     """
     if mode == "extract":
         return extract_for_llm(
@@ -174,5 +219,13 @@ def main(mode: str, **kwargs) -> dict:
             llm_extracted=kwargs.get("llm_extracted", {}),
             po_match=kwargs.get("po_match"),
         )
+    elif mode == "dispatch_uipath":
+        return dispatch_uipath_invoice_job(
+            llm_extracted=kwargs.get("llm_extracted", {}),
+            po_match=kwargs.get("po_match"),
+            attachment_filename=kwargs.get("attachment_filename", ""),
+        )
     else:
-        return {"error": f"Unknown mode: {mode}. Use 'extract' or 'build_payload'."}
+        return {
+            "error": f"Unknown mode: {mode}. Use 'extract', 'build_payload', or 'dispatch_uipath'."
+        }

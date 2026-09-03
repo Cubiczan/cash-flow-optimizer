@@ -5,6 +5,7 @@ const logoLabels: Record<string, string> = {
   xero: 'Xero',
   precoro: 'PC',
   outlook: 'OL',
+  uipath: 'UP',
   syft: 'Sy',
 };
 
@@ -14,7 +15,7 @@ export const IntegrationsView: FunctionComponent = () => {
       <div class="view-header">
         <div>
           <h1>Integrations</h1>
-          <p>4 platforms connected via Vellum API Nodes · OAuth 2.0 + API Keys · Composio managed auth</p>
+          <p>5 platforms connected via Vellum API Nodes · OAuth 2.0 + API Keys · Composio + UiPath managed auth</p>
         </div>
       </div>
 

@@ -17,13 +17,13 @@ A Vellum-powered cash flow intelligence system with real-time Xero, Precoro, and
 ## What It Does
 
 - **Daily Cash Position** — automated 7am report: Xero bank balance + AR/AP aging + Precoro committed POs → LLM analysis → email to CFO
-- **Invoice Ingestion** — Outlook trigger → PDF extraction → 3-way PO match → auto-post to Xero AP
+- **Invoice Ingestion** — Outlook / UiPath trigger → PDF extraction → 3-way PO match → auto-post to Xero AP
 - **13-Week Rolling Forecast** — Monday 6am: Xero balance sheet + AR/AP schedule + POs → LLM narrative + risk register → email to CFO + Moelis team
 
 ## Architecture
 
 ```
-Triggers (Cron / Outlook) → API Nodes (Xero, Precoro, Graph API)
+Triggers (Cron / Outlook / UiPath) → API Nodes (Xero, Precoro, Graph API)
   → Code Nodes (normalize, forecast, anomaly detect)
   → Agent Node (LLM cash analysis)
   → Guardrail Node (threshold alerts)
@@ -49,6 +49,7 @@ Triggers (Cron / Outlook) → API Nodes (Xero, Precoro, Graph API)
 | **Xero** | OAuth 2.0 (30-min auto-refresh) | Bank txns, AR/AP aging, invoices, balance sheet |
 | **Precoro** | API Key (`X-AUTH-KEY` header) | Purchase orders, receipts, approved spend |
 | **Outlook** | OAuth 2.0 via Composio | Invoice emails, PDF attachments, calendar |
+| **UiPath** | OAuth 2.0 client credentials | Outlook inbox reads, OneDrive handoff, job orchestration |
 | **Syft** | N/A — no public API | Logic replicated via Vellum Agent + Code Nodes |
 
 ## Code Nodes (`code-nodes/`)
@@ -59,7 +60,8 @@ Triggers (Cron / Outlook) → API Nodes (Xero, Precoro, Graph API)
 | `data_normalizer.py` | WF1 | Normalize Xero + Precoro → unified schema |
 | `forecast_model.py` | WF3 | Build 13-week rolling cash model |
 | `anomaly_detector.py` | WF1 | Z-score anomaly detection (replaces Syft) |
-| `invoice_parser.py` | WF2 | PDF extraction + 3-way match + Xero payload |
+| `invoice_parser.py` | WF2 | PDF extraction + 3-way match + Xero payload + optional UiPath dispatch |
+| `uipath_orchestrator.py` | WF2/WF3 | UiPath auth + job start helper |
 
 ## Dashboard App (`/workspace/data/apps/cash-flow-optimizer/`)
 
@@ -67,7 +69,7 @@ Interactive Preact + Chart.js dashboard with 4 tabs:
 - **Dashboard** — KPIs, 13-week mini chart, AR/AP aging, AI recommendations, committed POs
 - **13-Week Forecast** — full chart + week-by-week detail table
 - **Workflows** — animated simulation of all 3 Vellum workflows
-- **Integrations** — live status of Xero, Precoro, Outlook, Syft
+- **Integrations** — live status of Xero, Precoro, Outlook, UiPath, Syft
 
 ## Implementation Roadmap
 
@@ -76,7 +78,7 @@ Interactive Preact + Chart.js dashboard with 4 tabs:
 | 1. Foundation | 1-2 | Xero connection, daily cash pull, basic email |
 | 2. Procurement | 3 | Precoro POs, committed spend tracking |
 | 3. Intelligence | 4-5 | LLM forecast, anomaly detection (replaces Syft) |
-| 4. Email Automation | 6 | Outlook ingestion, PDF extraction, AR follow-ups |
+| 4. Email Automation | 6 | Outlook / UiPath ingestion, PDF extraction, AR follow-ups |
 | 5. Refinement | 7-8 | RAG history, evaluation suite, dashboard API |
 
 ## Key Technical Decisions
@@ -105,6 +107,16 @@ MS_GRAPH_TENANT_ID=
 
 # === Composio (Outlook OAuth via managed auth) ===
 COMPOSIO_API_KEY=
+
+# === UiPath Automation Cloud ===
+UIPATH_CLIENT_ID=
+UIPATH_CLIENT_SECRET=
+UIPATH_ORGANIZATION_NAME=
+UIPATH_TENANT_NAME=
+UIPATH_RELEASE_KEY=
+UIPATH_FOLDER_KEY=
+UIPATH_BASE_URL=https://cloud.uipath.com
+UIPATH_SCOPE=OR.Default OR.Jobs
 
 # === Vellum ===
 VELLUM_API_KEY=
